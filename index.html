@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FractalFun</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: black;
+        }
+        canvas {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+<canvas id="myCanvas"></canvas>
+<script>
+    var canvas = document.getElementById('myCanvas');
+    var context = canvas.getContext('2d');
+    var width = window.innerWidth;
+    var height = window.innerHeight;
+    canvas.width = width;
+    canvas.height = height;
+
+    var creal = -0.7;
+    var cimag = 0.27015;
+    var zoom = 1;
+    var offsetX = 0;
+    var offsetY = 0;
+    var maxIter = 100;
+    var palette = [];
+    
+    for (var i = 0; i < 256; i++) {
+        var color = (i % 6) * 48;
+        palette[i] = `rgb(${color}, ${255 - color}, ${color * 2})`;
+    }
+
+    function julia() {
+        var imageData = context.createImageData(width, height);
+        var data = imageData.data;
+
+        for (var y = 0; y < height; y++) {
+            for (var x = 0; x < width; x++) {
+                var zx = (x - width / 2) / (0.5 * zoom * width) + offsetX;
+                var zy = (y - height / 2) / (0.5 * zoom * height) + offsetY;
+                var i = maxIter;
+
+                while (zx * zx + zy * zy < 4 && i > 0) {
+                    var xtemp = zx * zx - zy * zy + creal;
+                    zy = 2.0 * zx * zy + cimag;
+                    zx = xtemp;
+                    i--;
+                }
+
+                var colorIndex = Math.floor(i / maxIter * 255);
+                var color = palette[colorIndex];
+                var [r, g, b] = color.match(/\d+/g).map(Number);
+                
+                var index = (y * width + x) * 4;
+                data[index] = r;
+                data[index + 1] = g;
+                data[index + 2] = b;
+                data[index + 3] = 255; // Alpha channel
+            }
+        }
+
+        context.putImageData(imageData, 0, 0);
+        zoom *= 1.01;
+        offsetX += 0.002;
+        offsetY -= 0.001;
+        requestAnimationFrame(julia);
+    }
+
+    window.addEventListener('resize', () => {
+        width = window.innerWidth;
+        height = window.innerHeight;
+        canvas.width = width;
+        canvas.height = height;
+    });
+
+    julia();
+</script>
+</body>
+</html>
